@@ -16,6 +16,8 @@ Thank you for joining me in this nostalgic and educational endeavor. Let's recre
 
 ## Contributing
 
+`/!\ The emulator will be written in C++ with GLFW or SLD for the controls /!\`
+
 Your contributions are not only welcomed but also highly appreciated! This project thrives on the collective knowledge and expertise of the community. Here's how you can contribute:
 
 1. **Pull Requests**: 
@@ -36,7 +38,14 @@ This project is licensed under the **GNU General Public License v3.0**. Please m
 
 # CPU
 
-## CPU Instruction Set:
+## General Specifications
+
+- **Clock Speed**: 50MHz for each core.
+- **Cache**:
+    - **L1 Cache**: 8KB per core (divided between I-Cache and D-Cache).
+    - **L2 Cache**: 32KB or 64KB shared between the two cores.
+
+## Instruction Set
 
 1. **Basic Arithmetic Operations:**
 	- `ADD` (Addition)
@@ -88,6 +97,48 @@ This project is licensed under the **GNU General Public License v3.0**. Please m
 	- `HALT` (Halts the CPU)
 	- `FETCH` (Block copy using burst mode)
 
+## Registers
+
+### General-Purpose Registers:
+
+1. **Data Registers (D0-D7)**:
+    - **Size**: 32 bits each.
+    - **Use**: Used for general computations, arithmetic operations, and data storage.
+
+2. **Address Registers (A0-A6)**:
+    - **Size**: 32 bits each.
+    - **Use**: Used for addressing and pointer operations.
+
+### Special-Purpose Registers:
+
+3. **SP (Stack Pointer or A7)**:
+    - **Size**: 32 bits.
+    - **Use**: Points to the top of the stack, managing subroutine calls, returns, and local variable storage.
+
+4. **PC (Program Counter)**:
+    - **Size**: 32 bits.
+    - **Use**: Holds the address of the next instruction to be executed.
+
+5. **SR (Status Register)**:
+    - **Size**: 16 bits
+    - **Use**: Represents the state of the processor, including flags and system status bits.
+
+6. **IR (Instruction Register)**:
+    - **Size**: 32 bits.
+    - **Use**: Holds the currently executing instruction.
+
+7. **BL (Bus Lock Register)**:
+    - **Size**: 1 bit.
+    - **Use**: Used to manage bus access and ensure atomic operations.
+
+8. **CID (Core ID Register)**:
+    - **Size**: 1 bit.
+    - **Use**: Identifies the CPU core, assuming a dual-core system.
+
+9. **IER (Interrupt Enable Register)**:
+    - **Size**: 16 bits
+    - **Use**: Controls which interrupts are enabled or disabled. Each bit corresponds to a different interrupt source.
+
 ## Interrupt System
 
 ### Overview:
@@ -97,7 +148,9 @@ The interrupt system facilitates asynchronous communication between hardware per
 
 1. **Interrupt Controller**: 
    - Role: Monitors interrupt lines for signals and manages the dispatch of corresponding Interrupt Service Routines (ISRs).
-   - Features: Equipped with memory-mapped registers dedicated to storing ISR pointers. 
+   - Features:
+        - Equipped with memory-mapped registers dedicated to storing ISR pointers.
+        - **Interrupt Status Register**: Provides information about which interrupt was triggered. When an interrupt is triggered, its respective bit is set.
 
 2. **ISR Pointers**: 
 
@@ -107,7 +160,7 @@ The interrupt system facilitates asynchronous communication between hardware per
 
 ### Interrupt Handling Process:
 
-1. **Interrupt Detection**: The interrupt controller continuously checks interrupt lines for any active signals.
+1. **Interrupt Detection**: The interrupt controller continuously checks interrupt lines for any active signals. If several interrupts are triggered at the same time, a priority is defined materially.
 
 2. **ISR Pointer Check**: Upon detecting an active interrupt signal, the controller reviews the corresponding ISR pointer.
     - If null (0x00): The interrupt is deemed disabled, and the CPU continues its ongoing task without disruption.
@@ -131,11 +184,52 @@ The interrupt system facilitates asynchronous communication between hardware per
 
 # GPU
 
-This section is empty for the moment, but it will be filled one day... we hope
+## General Specifications
+
+- **Clock Speed**: 100MHz.
+- **Resolution**: Maximum of 480p.
+- **Aspect Ratio**: 16:9.
+- **Color Depth**: 24-bit color (16 million colors).
+- **Texture Filtering**: Trilinear filtering on mipmaps.
+- **Shading Model**: Phong interpolation for more realistic lighting.
+- **VRAM**: 1.5MB.
+- **Video Output**: VGA (Video Graphics Array) port.
+
+---
+
+# MEMORY
+
+## General Specifications
+
+- **RAM**: 4MB.
+
+## virtual memory map
+
+1. **Bootloader**: store in the first part of the memory, load the bios and other essential element of the console.
+2. **RAM**: the ram itself, which will contain all the program informations.
+3. **Hard Drive**: provides access to the hard drive of the console.
+4. **CD Rom**: allows access to the disk drive and therefore to the game which will be loaded into memory by the bootloader.
+5. **Interrupt Controller**: provides access to the mapped registers of the interrupt controller.
+
+---
+
+# AUDIO
+
+## Sound Digital Signal Processor (DSP) General Specifications
+
+- **Clock Speed**: 50MHz.
+- **Sound Channels**: Supports 32 simultaneous channels.
+
+---
+
+# INPUT/OUTPUT
+- **Controller Interface**: Serial interface for game controllers. Controls are not managed by interrupt but by polling.
 
 ---
 
 # STORAGE
+
+- **Primary Game Media**: CDs.
 
 ## 16MB Mini Hard Disk Structure
 
