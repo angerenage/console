@@ -133,7 +133,6 @@ This project is licensed under the **GNU General Public License v3.0**. Please m
 
 - **Compiler/Assembler**: The tools compiling or assembling code for this architecture need to be precisely aware of the layout for each OpCode to generate correct machine code.
 
-
 ## Registers
 
 ### General-Purpose Registers:
@@ -145,6 +144,23 @@ This project is licensed under the **GNU General Public License v3.0**. Please m
 2. **Address Registers (A0-A6)**:
     - **Size**: 32 bits each.
     - **Use**: Used for addressing and pointer operations.
+
+### Matrix unit Registers:
+
+In 3D space, a rotation can always be described as a rotation about one of the primary axes: X, Y, or Z. When rotating about a specific axis, only two out of the three coordinates change, while the value along the rotation axis remains constant. Given this behavior, we can use a 2x2 matrix to represent each of these primary axis rotations:
+
+- For an X-axis rotation, the matrix represents the transformation of Y and Z coordinates.
+- For a Y-axis rotation, it represents the transformation of X and Z coordinates.
+- For a Z-axis rotation, it represents the transformation of X and Y coordinates.
+
+Hence, a 2x2 matrix is sufficient to represent any rotation in 3D space about a primary axis. To execute a composite rotation around multiple axes, you simply apply multiple 2x2 transformations in sequence.
+
+1. **Rotation Matrix Registers**:
+    - **R00, R01**: The first row of the rotation matrix.
+    - **R10, R11**: The second row of the rotation matrix.
+
+2. **3D Point/Vector Registers**:
+    - **Vx, Vy**: Registers that represent the x and y coordinates of a 2D point or vector.
 
 ### Special-Purpose Registers:
 
