@@ -45,17 +45,19 @@ This project is licensed under the **GNU General Public License v3.0**. Please m
     - **L1 Cache**: 8KB per core (divided between I-Cache and D-Cache).
     - **L2 Cache**: 32KB or 64KB shared between the two cores.
 
-## Instruction Set
+## Instructions
+
+### Instruction Set
 
 1. **Basic Arithmetic Operations:**
-	- `ADD` (Addition)
-	- `SUB` (Subtraction)
+	- `ADD` \ `ADDcc` (Addition)
+	- `SUB` \ `SUBcc` (Subtraction)
 	- `MUL` (Multiplication)
 	- `DIV` (Division)
    
 2. **Logic Operations:**
-	- `AND` (Bitwise AND)
-	- `OR` (Bitwise OR)
+	- `AND` \ `ANDcc` (Bitwise AND)
+	- `OR` \ `ORcc` (Bitwise OR)
 	- `XOR` (Bitwise XOR)
 	- `NOT` (Bitwise NOT)
 	- `LSL` (Logical Shift Left)
@@ -84,8 +86,8 @@ This project is licensed under the **GNU General Public License v3.0**. Please m
 	- `RTS` (Return from Subroutine)
    
 4. **Memory Access:**
-	- `LD` (Load from memory to a register)
-	- `ST` (Store from a register to memory)
+	- `LD` \ `LDcc` (Load from memory to a register)
+	- `ST` \ `STcc` (Store from a register to memory)
 	- `PUSH` (Push to stack)
 	- `POP` (Pop from stack)
    
@@ -96,6 +98,41 @@ This project is licensed under the **GNU General Public License v3.0**. Please m
 	- `NOP` (No Operation, can be useful in various scenarios, like waiting for some operations to complete)
 	- `HALT` (Halts the CPU)
 	- `FETCH` (Block copy using burst mode)
+
+### Instruction Format
+
+#### General Layout:
+
+1. **OpCode**:
+   - **OpCode (5 bits)**: The OpCode is always positioned first. It determines the nature of the instruction and implicitly signals whether the instruction is conditional.
+
+2. **Condition** (Present only if OpCode indicates a conditional instruction):
+   - **Conditional Code (Cc, 4 bits)**: Positioned immediately after the OpCode for conditional instructions.
+
+3. **Registers**:
+   - Registers are positioned directly after the OpCode (for non-conditional instructions) or after the Condition (for conditional instructions). Depending on the instruction type, you may encounter the following registers:
+     - **Rs1 (5 bits)**: Source register 1.
+     - **Rs2 (5 bits)**: Source register 2 or parameter register.
+     - **Rd (5 bits)**: Destination register.
+     - **Ra (5 bits)**: Address register (specifically for certain memory operations).
+
+4. **Immediate/Offset**:
+   - The remaining bits, post register decoding, are allocated for immediate values or offsets. The size of this field will vary based on the type and conditionality of the instruction.
+
+#### Decoding Process:
+
+- The decoder first checks the OpCode. Depending on its value, the decoder determines whether it should expect a condition field following the OpCode.
+- If a condition field is present, the decoder then reads it before moving on to the registers. Otherwise, it directly decodes the registers.
+- The remaining bits are treated as an immediate value or offset, depending on the specific instruction.
+
+#### Considerations:
+
+- **Decoder Complexity**: The decoder is tasked with determining, based on OpCode, whether to expect a condition field. This adds slight complexity but offers flexibility in instruction formatting.
+  
+- **Performance**: While the variable structure might introduce marginal delays in instruction decoding compared to fully fixed-width instructions, any potential slowdowns are anticipated to be minimal, contingent on decoder design.
+
+- **Compiler/Assembler**: The tools compiling or assembling code for this architecture need to be precisely aware of the layout for each OpCode to generate correct machine code.
+
 
 ## Registers
 
