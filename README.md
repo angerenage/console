@@ -203,13 +203,41 @@ The interrupt system facilitates asynchronous communication between hardware per
 
 - **RAM**: 4MB.
 
-## virtual memory map
+## mapped memory
 
 1. **Bootloader**: store in the first part of the memory, load the bios and other essential element of the console.
 2. **RAM**: the ram itself, which will contain all the program informations.
 3. **Hard Drive**: provides access to the hard drive of the console.
 4. **CD Rom**: allows access to the disk drive and therefore to the game which will be loaded into memory by the bootloader.
 5. **Interrupt Controller**: provides access to the mapped registers of the interrupt controller.
+
+## Direct Memory Access (DMA)
+
+### Overview:
+Direct Memory Access (DMA) allows peripherals or memory sub-systems to communicate directly with memory without going through the CPU, improving system efficiency. Our DMA system integrates smoothly with the broader architecture of the Retro Game Console Emulator to provide fast and efficient memory transfers.
+
+### DMA Controller Features:
+
+1. **Mapped Registers**: The DMA controller is equipped with three memory-mapped registers:
+    - **Source Pointer**: Points to the block of memory to be copied.
+    - **Block Length**: Specifies the length of the block.
+    - **Destination Pointer**: Specifies where the block should be copied to.
+
+2. **FETCH Instruction**: Initiating a `FETCH` command starts the DMA transfer. The DMA controller oversees the process, ensuring smooth transfer while taking into account system priorities.
+
+3. **Pause and Resume**: Should the CPU or GPU request memory access during a DMA transfer, the process will pause momentarily. Once the CPU/GPU completes its operation, the DMA transfer resumes.
+
+4. **Interrupt Handling**: On completion of a DMA transfer, an interrupt is triggered on the CPU to notify it of the completion. This can be useful for synchronization purposes or to alert the system to begin the next steps in its operation.
+
+### Priority and Memory Access:
+
+1. **Priority**: Both the CPU and GPU are granted priority over DMA operations. This ensures the primary system functions aren't hindered by ongoing transfers, enhancing system responsiveness.
+
+2. **Memory Protection**: The address mapper plays a pivotal role in memory protection. Before any DMA operation:
+    - It verifies the legitimacy of the target address.
+    - If a write attempt targets a restricted area, an exception is raised, preventing potential system crashes or data corruption.
+
+3. **Safe Memory Operations**: Developers and/or compilers should ensure that DMA operations don't overwrite crucial system or game data in RAM or other storage media.
 
 ---
 
