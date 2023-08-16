@@ -92,16 +92,18 @@ This project is licensed under the **GNU General Public License v3.0**. Please m
 	- `POP` (Pop from stack)
    
 5. **Special Operations:**
-	- `MATMUL` (Matrix Multiplication for transformation operations)
+	- `MATMUL` (Matrix Multiplication for transformation operations, the result is put in the N matrix)
    
 6. **Miscellaneous:**
 	- `NOP` (No Operation, can be useful in various scenarios, like waiting for some operations to complete)
 	- `HALT` (Halts the CPU)
-	- `FETCH` (Block copy using burst mode)
+	- `FETCH` (Block copy using the DMA)
 
 ### Instruction Format
 
 #### General Layout:
+
+`I don't really like my current design, its complexity could pose problems for compilers`
 
 1. **OpCode**:
    - **OpCode (5 bits)**: The OpCode is always positioned first. It determines the nature of the instruction and implicitly signals whether the instruction is conditional.
@@ -138,7 +140,7 @@ This project is licensed under the **GNU General Public License v3.0**. Please m
 ### General-Purpose Registers:
 
 1. **Data Registers (D0-D7)**:
-    - **Size**: 32 bits each.
+    - **Size**: 64 bits each.
     - **Use**: Used for general computations, arithmetic operations, and data storage.
 
 2. **Address Registers (A0-A6)**:
@@ -147,20 +149,17 @@ This project is licensed under the **GNU General Public License v3.0**. Please m
 
 ### Matrix unit Registers:
 
-In 3D space, a rotation can always be described as a rotation about one of the primary axes: X, Y, or Z. When rotating about a specific axis, only two out of the three coordinates change, while the value along the rotation axis remains constant. Given this behavior, we can use a 2x2 matrix to represent each of these primary axis rotations:
+Any transformation occurring in a 4x4 matrix can be decomposed into 2x2 matrices. And since there are not enough register locations for two 4x4 matrices, we have to make do with 2x2.
 
-- For an X-axis rotation, the matrix represents the transformation of Y and Z coordinates.
-- For a Y-axis rotation, it represents the transformation of X and Z coordinates.
-- For a Z-axis rotation, it represents the transformation of X and Y coordinates.
+All of these registers can store up to 64 bits.
 
-Hence, a 2x2 matrix is sufficient to represent any rotation in 3D space about a primary axis. To execute a composite rotation around multiple axes, you simply apply multiple 2x2 transformations in sequence.
+1. **First Matrix Registers**:
+    - **M00, M01**: The first row of the first matrix.
+    - **M10, M11**: The second row of the first matrix.
 
-1. **Rotation Matrix Registers**:
-    - **R00, R01**: The first row of the rotation matrix.
-    - **R10, R11**: The second row of the rotation matrix.
-
-2. **3D Point/Vector Registers**:
-    - **Vx, Vy**: Registers that represent the x and y coordinates of a 2D point or vector.
+2. **Second Matrix Registers**:
+    - **N00, N01**: The first row of the second matrix.
+    - **N10, N11**: The second row of the second matrix.
 
 ### Special-Purpose Registers:
 
