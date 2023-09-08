@@ -21,9 +21,9 @@ Thank you for joining me in this nostalgic and educational endeavor. Let's recre
 Your contributions are not only welcomed but also highly appreciated! This project thrives on the collective knowledge and expertise of the community. Here's how you can contribute:
 
 1. **Pull Requests**: 
-    - **Fork** the repository.
-    - Make your desired changes or additions in your forked repo.
-    - Submit a **pull request**. Please ensure your code is well-documented, and if possible, add tests. I will review all pull requests and merge them if they fit the project's direction and quality standards.
+	- **Fork** the repository.
+	- Make your desired changes or additions in your forked repo.
+	- Submit a **pull request**. Please ensure your code is well-documented, and if possible, add tests. I will review all pull requests and merge them if they fit the project's direction and quality standards.
    
 2. **Issues**: If you encounter any bugs, inconsistencies, or even have a suggestion, feel free to open an issue. Detailed bug reports are incredibly beneficial.
 
@@ -42,8 +42,8 @@ This project is licensed under the **GNU General Public License v3.0**. Please m
 
 - **Clock Speed**: 50MHz for each core.
 - **Cache**:
-    - **L1 Cache**: 8KB per core (divided between I-Cache and D-Cache).
-    - **L2 Cache**: 32KB or 64KB shared between the two cores.
+	- **L1 Cache**: 8KB per core (divided between I-Cache and D-Cache), four-way associative.
+	- **L2 Cache**: 32KB or 64KB shared between the two cores, eight-way associative.
 
 ## Instructions
 
@@ -68,20 +68,20 @@ This project is licensed under the **GNU General Public License v3.0**. Please m
 3. **Flow Control:**
 	- `JMP` (Unconditional Jump)
 	- `Bcc` (Conditional Branches, where "cc" could be one of the following conditions)
-        - **EQ**: Equal
-        - **NE**: Not Equal
-        - **CS/HS**: Carry Set/Unsigned higher or same
-        - **CC/LO**: Carry Clear/Unsigned lower
-        - **MI**: Negative
-        - **PL**: Positive or Zero
-        - **VS**: Overflow
-        - **VC**: No Overflow
-        - **HI**: Unsigned Higher
-        - **LS**: Unsigned Lower or Same
-        - **GE**: Greater than or Equal (signed)
-        - **LT**: Less Than (signed)
-        - **GT**: Greater Than (signed)
-        - **LE**: Less than or Equal (signed)
+		- **EQ**: Equal
+		- **NE**: Not Equal
+		- **CS/HS**: Carry Set/Unsigned higher or same
+		- **CC/LO**: Carry Clear/Unsigned lower
+		- **MI**: Negative
+		- **PL**: Positive or Zero
+		- **VS**: Overflow
+		- **VC**: No Overflow
+		- **HI**: Unsigned Higher
+		- **LS**: Unsigned Lower or Same
+		- **GE**: Greater than or Equal (signed)
+		- **LT**: Less Than (signed)
+		- **GT**: Greater Than (signed)
+		- **LE**: Less than or Equal (signed)
 	- `JSR` (Jump to Subroutine)
 	- `RTS` (Return from Subroutine)
    
@@ -97,29 +97,36 @@ This project is licensed under the **GNU General Public License v3.0**. Please m
 6. **Miscellaneous:**
 	- `NOP` (No Operation, can be useful in various scenarios, like waiting for some operations to complete)
 	- `HALT` (Halts the CPU)
+	- `MOV` (Move data from one register to another)
+	- `SETI` (Set Immediate value to a register)
 	- `FETCH` (Block copy using the DMA)
 
 ### Instruction Format
 
 #### General Layout:
 
-`I don't really like my current design, its complexity could pose problems for compilers`
+`I don't really like my current design, its complexity could be a problem for compilers`
 
 1. **OpCode**:
    - **OpCode (5 bits)**: The OpCode is always positioned first. It determines the nature of the instruction and implicitly signals whether the instruction is conditional.
 
-2. **Condition** (Present only if OpCode indicates a conditional instruction):
-   - **Conditional Code (Cc, 4 bits)**: Positioned immediately after the OpCode for conditional instructions.
+2. **Registers**:
+	- Registers are positioned directly after the OpCode. Depending on the instruction type, you may encounter the following registers:
+		- **Reg1 (5 bits)**: Destination register.
+		- **Reg2 (5 bits)**: Source register 1.
+		- **Reg3 (5 bits)**: Source register 2 or parameter register.
 
-3. **Registers**:
-   - Registers are positioned directly after the OpCode (for non-conditional instructions) or after the Condition (for conditional instructions). Depending on the instruction type, you may encounter the following registers:
-     - **Rs1 (5 bits)**: Source register 1.
-     - **Rs2 (5 bits)**: Source register 2 or parameter register.
-     - **Rd (5 bits)**: Destination register.
-     - **Ra (5 bits)**: Address register (specifically for certain memory operations).
+3. **Immediate** (only exist for the SETI instruction):
+	- **Immediate (22 bits)**: The bits of the immediate value of the SETI instruction.
 
-4. **Immediate/Offset**:
-   - The remaining bits, post register decoding, are allocated for immediate values or offsets. The size of this field will vary based on the type and conditionality of the instruction.
+4. **Flags and Values**:
+	- These flags are positioned just before the condition of the conditional operations and allow to know how certain operations on the values ​​must be managed.
+		- **Int/Float (1 bit)**: Specifies whether the operation should be performed considering values ​​as integers (false) or IEEE 754 floats (true).
+		- **Signed Int (1 bit)**: This flag lets you know if the value is a signed (true) or unsigned integer (flase).
+		- **Size (2 bits)**: This value allows you to know how many bytes must be loaded/stored (8, 16, 32 or 64 bits)
+
+5. **Condition** (Present only if OpCode indicates a conditional instruction):
+	- **Conditional Code (Cc, 4 bits)**: Positioned at the end for conditional instructions.
 
 #### Decoding Process:
 
@@ -127,69 +134,66 @@ This project is licensed under the **GNU General Public License v3.0**. Please m
 - If a condition field is present, the decoder then reads it before moving on to the registers. Otherwise, it directly decodes the registers.
 - The remaining bits are treated as an immediate value or offset, depending on the specific instruction.
 
-#### Considerations:
-
-- **Decoder Complexity**: The decoder is tasked with determining, based on OpCode, whether to expect a condition field. This adds slight complexity but offers flexibility in instruction formatting.
-  
-- **Performance**: While the variable structure might introduce marginal delays in instruction decoding compared to fully fixed-width instructions, any potential slowdowns are anticipated to be minimal, contingent on decoder design.
-
-- **Compiler/Assembler**: The tools compiling or assembling code for this architecture need to be precisely aware of the layout for each OpCode to generate correct machine code.
-
 ## Registers
 
 ### General-Purpose Registers:
 
-1. **Data Registers (D0-D7)**:
-    - **Size**: 64 bits each.
-    - **Use**: Used for general computations, arithmetic operations, and data storage.
+1. **Int Data Registers (I0-I7)** and **Float Data Registers (F0-F7)**:
+	- **Size**: 64 bits each.
+	- **Use**: Used for general computations, arithmetic operations, and data storage.
 
-2. **Address Registers (A0-A6)**:
-    - **Size**: 32 bits each.
-    - **Use**: Used for addressing and pointer operations.
+2. **Address Registers (A0-A5)**:
+	- **Size**: 32 bits each.
+	- **Use**: Used for addressing and pointer operations.
+
+### Special-Purpose Registers:
+
+3. **SP (Stack Pointer or A6)**:
+	- **Size**: 32 bits.
+	- **Use**: Points to the top of the stack, managing subroutine calls, returns, and local variable storage.
+
+4. **PC (Program Counter)**:
+	- **Size**: 32 bits.
+	- **Use**: Holds the address of the next instruction to be executed.
+
+5. **FR (flags Register)**:
+	- **Size**: 4 bits
+	- **Use**: Represents the state of the core, including flags and system status bits.
+	- **Flags**:
+		- **Z**: Zero flag
+		- **C**: Carry flag
+		- **N**: Negative Flag
+		- **V**: Overflow Flag
+
+6. **IR (Instruction Register)**:
+	- **Size**: 32 bits.
+	- **Use**: Holds the currently executing instruction.
+
+7. **IER (Interrupt Enable Register)**:
+    - **Size**: 16 bits
+    - **Use**: Controls which interrupts are enabled or disabled. Each bit corresponds to a different interrupt source.
+
+8. **BL (Bus Lock Register)**:
+	- **Size**: 1 bit.
+	- **Use**: Used to manage bus access and ensure atomic operations.
+
+9. **CID (Core ID Register)**:
+	- **Size**: 1 bit.
+	- **Use**: Identifies the CPU core.
 
 ### Matrix unit Registers:
-
-Any transformation occurring in a 4x4 matrix can be decomposed into 2x2 matrices. And since there are not enough register locations for two 4x4 matrices, we have to make do with 2x2.
 
 All of these registers can store up to 64 bits.
 
 1. **First Matrix Registers**:
-    - **M00, M01**: The first row of the first matrix.
-    - **M10, M11**: The second row of the first matrix.
+	| **M00** | **M01** |
+	| :-: | :-: |
+	| **M10** | **M11** |
 
 2. **Second Matrix Registers**:
-    - **N00, N01**: The first row of the second matrix.
-    - **N10, N11**: The second row of the second matrix.
-
-### Special-Purpose Registers:
-
-3. **SP (Stack Pointer or A7)**:
-    - **Size**: 32 bits.
-    - **Use**: Points to the top of the stack, managing subroutine calls, returns, and local variable storage.
-
-4. **PC (Program Counter)**:
-    - **Size**: 32 bits.
-    - **Use**: Holds the address of the next instruction to be executed.
-
-5. **SR (Status Register)**:
-    - **Size**: 16 bits
-    - **Use**: Represents the state of the processor, including flags and system status bits.
-
-6. **IR (Instruction Register)**:
-    - **Size**: 32 bits.
-    - **Use**: Holds the currently executing instruction.
-
-7. **BL (Bus Lock Register)**:
-    - **Size**: 1 bit.
-    - **Use**: Used to manage bus access and ensure atomic operations.
-
-8. **CID (Core ID Register)**:
-    - **Size**: 1 bit.
-    - **Use**: Identifies the CPU core, assuming a dual-core system.
-
-9. **IER (Interrupt Enable Register)**:
-    - **Size**: 16 bits
-    - **Use**: Controls which interrupts are enabled or disabled. Each bit corresponds to a different interrupt source.
+	| **N00** | **N01** |
+	| :-: | :-: |
+	| **N10** | **N11** |
 
 ## Interrupt System
 
@@ -201,8 +205,8 @@ The interrupt system facilitates asynchronous communication between hardware per
 1. **Interrupt Controller**: 
    - Role: Monitors interrupt lines for signals and manages the dispatch of corresponding Interrupt Service Routines (ISRs).
    - Features:
-        - Equipped with memory-mapped registers dedicated to storing ISR pointers.
-        - **Interrupt Status Register**: Provides information about which interrupt was triggered. When an interrupt is triggered, its respective bit is set.
+		- Equipped with memory-mapped registers dedicated to storing ISR pointers.
+		- **Interrupt Status Register**: Provides information about which interrupt was triggered. When an interrupt is triggered, its respective bit is set.
 
 2. **ISR Pointers**: 
 
@@ -215,8 +219,8 @@ The interrupt system facilitates asynchronous communication between hardware per
 1. **Interrupt Detection**: The interrupt controller continuously checks interrupt lines for any active signals. If several interrupts are triggered at the same time, a priority is defined materially.
 
 2. **ISR Pointer Check**: Upon detecting an active interrupt signal, the controller reviews the corresponding ISR pointer.
-    - If null (0x00): The interrupt is deemed disabled, and the CPU continues its ongoing task without disruption.
-    - If valid: The process advances to the next step.
+	- If null (0x00): The interrupt is deemed disabled, and the CPU continues its ongoing task without disruption.
+	- If valid: The process advances to the next step.
 
 3. **Register Swap**: The active CPU register set is swapped out, ensuring the current operational context is securely stored.
 
@@ -266,16 +270,16 @@ The interrupt system facilitates asynchronous communication between hardware per
 ## Direct Memory Access (DMA)
 
 ### Overview:
-Direct Memory Access (DMA) allows peripherals or memory sub-systems to communicate directly with memory without going through the CPU, improving system efficiency. Our DMA system integrates smoothly with the broader architecture of the Retro Game Console Emulator to provide fast and efficient memory transfers.
+Direct Memory Access (DMA) allows peripherals or memory sub-systems to communicate directly with memory without hogging the CPU, improving system efficiency. Our DMA system integrates smoothly with the broader architecture of the Retro Game Console Emulator to provide fast and efficient memory transfers.
 
 ### DMA Controller Features:
 
-1. **Mapped Registers**: The DMA controller is equipped with three memory-mapped registers:
-    - **Source Pointer**: Points to the block of memory to be copied.
-    - **Block Length**: Specifies the length of the block.
-    - **Destination Pointer**: Specifies where the block should be copied to.
+1. **Mapped Registers**: The DMA controller is equipped with three registers:
+	- **Destination Pointer (32 bits)**: Specifies where the block should be copied to.
+	- **Source Pointer (32 bits)**: Points to the block of memory to be copied.
+	- **Block Length (64 bits)**: Specifies the length of the block.
 
-2. **FETCH Instruction**: Initiating a `FETCH` command starts the DMA transfer. The DMA controller oversees the process, ensuring smooth transfer while taking into account system priorities.
+2. **FETCH Instruction**: Initiating a `FETCH` command initialize and starts the DMA transfer. The DMA controller oversees the process, ensuring smooth transfer while taking into account system priorities.
 
 3. **Pause and Resume**: Should the CPU or GPU request memory access during a DMA transfer, the process will pause momentarily. Once the CPU/GPU completes its operation, the DMA transfer resumes.
 
@@ -286,8 +290,8 @@ Direct Memory Access (DMA) allows peripherals or memory sub-systems to communica
 1. **Priority**: Both the CPU and GPU are granted priority over DMA operations. This ensures the primary system functions aren't hindered by ongoing transfers, enhancing system responsiveness.
 
 2. **Memory Protection**: The address mapper plays a pivotal role in memory protection. Before any DMA operation:
-    - It verifies the legitimacy of the target address.
-    - If a write attempt targets a restricted area, an exception is raised, preventing potential system crashes or data corruption.
+	- It verifies the legitimacy of the target address.
+	- If a write attempt targets a restricted area, an exception is raised, preventing potential system crashes or data corruption.
 
 3. **Safe Memory Operations**: Developers and/or compilers should ensure that DMA operations don't overwrite crucial system or game data in RAM or other storage media.
 
@@ -314,18 +318,18 @@ Direct Memory Access (DMA) allows peripherals or memory sub-systems to communica
 ## 16MB Mini Hard Disk Structure
 
 1. ### Capacity Distribution:
-    - **Game Saves**: Approximately 13-14MB reserved primarily for game saves.
-    - **Metadata & Thumbnails**: Reserve 2-3MB specifically for metadata and thumbnail images.
+	- **Game Saves**: Approximately 13-14MB reserved primarily for game saves.
+	- **Metadata & Thumbnails**: Reserve 2-3MB specifically for metadata and thumbnail images.
 2. ### Game Save Metadata:
-    - **Hash**: A unique identifier for each save to ensure data integrity and help prevent corruption.
-    - **Game Title/ID**: Identifies which game the save belongs to.
-    - **Date & Time**: Timestamp of when the game was saved.
-    - **Thumbnail**: A visual snapshot or icon representing the game save. This could be an in-game screenshot or a predefined image associated with the game.
-    - **Other Metadata**: Player name, playtime, in-game location, etc.
+	- **Hash**: A unique identifier for each save to ensure data integrity and help prevent corruption.
+	- **Game Title/ID**: Identifies which game the save belongs to.
+	- **Date & Time**: Timestamp of when the game was saved.
+	- **Thumbnail**: A visual snapshot or icon representing the game save. This could be an in-game screenshot or a predefined image associated with the game.
+	- **Other Metadata**: Player name, playtime, in-game location, etc.
 3. ### User Interface:
-    - **List View**: Display game saves in a list or grid format with a scroll function.
-    - **Sorting Options**: Allow sorting by date, game title, or player name.
-    - **Thumbnail Preview**: Hovering or selecting a save could enlarge the thumbnail for a clearer view.
-    - **Deletion**: Offer easy options for players to delete older saves.
+	- **List View**: Display game saves in a list or grid format with a scroll function.
+	- **Sorting Options**: Allow sorting by date, game title, or player name.
+	- **Thumbnail Preview**: Hovering or selecting a save could enlarge the thumbnail for a clearer view.
+	- **Deletion**: Offer easy options for players to delete older saves.
 
 ---
