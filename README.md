@@ -1,5 +1,9 @@
 # Retro Game Console
 
+> **⚠️ Important Notice:**
+> 
+> The information in this repository is no longer up to date. A new architecture for the console's processor is being designed from the ground up, but progress may take a long time due to my studies. Thank you for your understanding.
+
 ## Introduction
 
 Hello and welcome to my Retro Game Console Emulator project!
